@@ -1,0 +1,29 @@
+:root {
+  /* Colors — forest green family + light green / creamy yellow */
+  --color-forest: #1b4332;
+  --color-forest-muted: #2d6a4f;
+  --color-light-green: #95d5b2;
+  --color-cream: #f4f1de;
+
+  /* Semantic tokens used by templates */
+  --color-box-bg: var(--color-cream);
+  --color-box-border: var(--color-forest);
+  --color-headline: var(--color-forest);
+  --color-body: var(--color-forest-muted);
+  --color-canvas-bg: transparent;
+
+  /* Typography */
+  --font-headline: "Segoe UI", system-ui, sans-serif;
+  --font-body: Georgia, "Times New Roman", serif;
+  --font-size-headline: 22px;
+  --font-size-body: 15px;
+
+  /* App chrome */
+  --color-ui-bg: #0d1f17;
+  --color-ui-surface: #1b3328;
+  --color-ui-border: #2d6a4f;
+  --color-ui-text: var(--color-cream);
+  --color-ui-muted: var(--color-light-green);
+  --color-ui-accent: var(--color-light-green);
+  --color-ui-danger: #e76f51;
+}

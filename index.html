@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alpha Canvas Overlay Studio</title>
+  </head>
+  <body>
+    <div id="theme-probe" aria-hidden="true"></div>
+    <div id="browser-warning" class="browser-warning" hidden></div>
+
+    <div id="app" class="app">
+      <aside id="admin" class="admin">
+        <header class="admin-header">
+          <h1>Overlay Studio</h1>
+          <p class="admin-subtitle">Edit scenes · export WebM with alpha</p>
+        </header>
+
+        <section class="admin-section">
+          <div class="section-header">
+            <h2>Scenes</h2>
+            <button type="button" id="add-scene-btn" class="btn btn-primary">Add scene</button>
+          </div>
+          <ul id="scene-list" class="scene-list"></ul>
+        </section>
+
+        <section class="admin-section">
+          <h2>Scene content</h2>
+          <form id="scene-form" class="scene-form"></form>
+        </section>
+
+        <section class="admin-section admin-theme-note">
+          <h2>Theme</h2>
+          <p>Colors and fonts are defined in <code>src/styles/theme.css</code> via CSS variables.</p>
+        </section>
+      </aside>
+
+      <main id="stage" class="stage">
+        <div class="stage-preview">
+          <div class="preview-frame checkerboard">
+            <canvas
+              id="export-canvas"
+              width="390"
+              height="844"
+              aria-label="Overlay preview"
+            ></canvas>
+          </div>
+        </div>
+
+        <section class="stage-controls">
+          <h2>Export</h2>
+          <div id="capability-status" class="capability-status"></div>
+
+          <div class="control-row">
+            <label for="fps-select">FPS</label>
+            <select id="fps-select">
+              <option value="30" selected>30</option>
+              <option value="60">60</option>
+            </select>
+          </div>
+
+          <div class="control-row">
+            <label>
+              <input type="radio" name="record-mode" value="current" checked />
+              Current scene
+            </label>
+            <label>
+              <input type="radio" name="record-mode" value="all" />
+              All scenes
+            </label>
+          </div>
+
+          <div class="control-row">
+            <label for="duration-input">Duration (sec)</label>
+            <input type="number" id="duration-input" min="1" max="120" value="3" />
+          </div>
+
+          <div class="control-row control-actions">
+            <button type="button" id="record-btn" class="btn btn-primary">Record</button>
+            <button type="button" id="stop-btn" class="btn" disabled>Stop</button>
+            <button type="button" id="download-btn" class="btn" disabled>Download WebM</button>
+          </div>
+
+          <p id="record-status" class="record-status"></p>
+        </section>
+
+        <section class="stage-playback">
+          <h2>Alpha check</h2>
+          <p class="playback-hint">Recorded video over a colored background — transparent areas show through.</p>
+          <div class="playback-frame checkerboard-bright">
+            <video id="playback-video" playsinline muted loop></video>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

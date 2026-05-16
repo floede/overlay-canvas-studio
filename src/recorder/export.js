@@ -40,8 +40,8 @@ export function createRecorder(canvas, { fps = 30, onStatus } = {}) {
   let recording = false;
   let lastBlob = null;
 
-  function drawFrame(scene) {
-    renderScene(ctx, scene);
+  function drawFrame(scene, animationContext) {
+    renderScene(ctx, scene, animationContext);
   }
 
   function startDrawLoop(scenes, sceneDurationMs, getSceneAtTime) {
@@ -52,10 +52,12 @@ export function createRecorder(canvas, { fps = 30, onStatus } = {}) {
       if (!recording) return;
       const elapsed = performance.now() - startTime;
       const scene = getSceneAtTime ? getSceneAtTime(elapsed) : scenes[0];
-      drawFrame(scene);
+      const progress = Math.min(elapsed / sceneDurationMs, 1.0);
+      const animationContext = { elapsed, progress, duration: sceneDurationMs };
+      drawFrame(scene, animationContext);
     }, frameInterval);
 
-    drawFrame(getSceneAtTime ? scenes[0] : scenes[0]);
+    drawFrame(getSceneAtTime ? scenes[0] : scenes[0], { elapsed: 0, progress: 0, duration: sceneDurationMs });
     onStatus?.(`Recording… ${(sceneDurationMs / 1000).toFixed(1)}s per segment`);
   }
 

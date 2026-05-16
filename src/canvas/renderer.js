@@ -1,7 +1,7 @@
 import { getTheme } from './theme.js';
 import { getTemplate, CANVAS_WIDTH, CANVAS_HEIGHT } from '../templates/registry.js';
 
-export function renderScene(ctx, scene) {
+export function renderScene(ctx, scene, animationContext = null) {
   const w = CANVAS_WIDTH;
   const h = CANVAS_HEIGHT;
 
@@ -13,7 +13,7 @@ export function renderScene(ctx, scene) {
   if (!template?.draw) return;
 
   const theme = getTheme();
-  template.draw(ctx, scene.data, w, h, theme);
+  template.draw(ctx, scene.data, w, h, theme, animationContext);
 }
 
 export function renderSceneToCanvas(canvas, scene) {

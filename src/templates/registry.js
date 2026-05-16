@@ -20,6 +20,7 @@ export const templates = {
       { key: 'box1.text', label: 'Box 1 text', type: 'textarea' },
       { key: 'box2.headline', label: 'Box 2 headline', type: 'text' },
       { key: 'box2.text', label: 'Box 2 text', type: 'textarea' },
+      { key: 'box2.percentage', label: 'Box 2 percentage (0-100, optional)', type: 'text' },
     ],
     defaults: defaultTwoBoxData(),
     draw: drawTwoBoxText,

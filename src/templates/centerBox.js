@@ -1,7 +1,7 @@
 const MARGIN = 24;
-const BOX_PADDING = 16;
+const BOX_PADDING = 48;
 const BOX_RADIUS = 8;
-const LINE_GAP = 4;
+const LINE_GAP = 8;
 
 export function defaultCenterBoxData() {
   return {
@@ -9,7 +9,7 @@ export function defaultCenterBoxData() {
   };
 }
 
-export function drawCenterBox(ctx, data, width, height, theme) {
+export function drawCenterBox(ctx, data, width, height, theme, animationContext = null) {
   const headline = String(data?.headline ?? '').trim();
   if (!headline) return;
 
@@ -41,8 +41,10 @@ function measureBox(ctx, headline, w, theme) {
 
 function getLineMetrics(ctx, line, fontSize) {
   const m = ctx.measureText(line);
-  const ascent = m.actualBoundingBoxAscent ?? fontSize * 0.78;
-  const descent = m.actualBoundingBoxDescent ?? fontSize * 0.22;
+  // Add significant extra headroom for accented characters (É, Ó, etc.)
+  // Using actualBoundingBoxAscent when available, otherwise generous fallback
+  const ascent = m.actualBoundingBoxAscent ?? fontSize * 1.0;
+  const descent = m.actualBoundingBoxDescent ?? fontSize * 0.3;
   return { ascent, descent, height: ascent + descent };
 }
 

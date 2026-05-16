@@ -1,7 +1,10 @@
-const MARGIN = 24;
+const MARGIN_VERTICAL = 48;
+const MARGIN_HORIZONTAL = 24;
 const BOX_PADDING = 16;
 const BOX_RADIUS = 8;
 const HEADLINE_GAP = 8;
+const CIRCLE_SIZE = 64;
+const CIRCLE_GAP = 12;
 
 export function defaultTwoBoxData() {
   return {
@@ -12,32 +15,34 @@ export function defaultTwoBoxData() {
     box2: {
       headline: 'Second insight',
       text: 'Additional context appears here. Edit text in the admin panel.',
+      percentage: '',
     },
   };
 }
 
-export function drawTwoBoxText(ctx, data, width, height, theme) {
-  const boxWidth = width - MARGIN * 2;
+export function drawTwoBoxText(ctx, data, width, height, theme, animationContext = null) {
+  const boxWidth = width - MARGIN_HORIZONTAL * 2;
 
   const layout1 = measureBox(ctx, normalizeBox(data?.box1), boxWidth, theme);
   if (layout1.height > 0) {
-    drawBox(ctx, MARGIN, MARGIN, boxWidth, layout1, theme, { centerText: true });
+    drawBox(ctx, MARGIN_HORIZONTAL, MARGIN_VERTICAL, boxWidth, layout1, theme, { centerText: true });
   }
 
   const layout2 = measureBox(ctx, normalizeBox(data?.box2), boxWidth, theme);
   if (layout2.height > 0) {
-    const y2 = height - MARGIN - layout2.height;
-    drawBox(ctx, MARGIN, y2, boxWidth, layout2, theme);
+    const y2 = height - MARGIN_VERTICAL - layout2.height;
+    drawBox(ctx, MARGIN_HORIZONTAL, y2, boxWidth, layout2, theme, { animationContext });
   }
 }
 
 function normalizeBox(box) {
   if (!box || typeof box !== 'object') {
-    return { headline: '', text: '' };
+    return { headline: '', text: '', percentage: '' };
   }
   return {
     headline: box.headline ?? '',
     text: box.text ?? '',
+    percentage: box.percentage ?? '',
   };
 }
 
@@ -46,7 +51,12 @@ function hasText(value) {
 }
 
 function hasContent(box) {
-  return hasText(box.headline) || hasText(box.text);
+  return hasText(box.headline) || hasText(box.text) || hasPercentage(box);
+}
+
+function hasPercentage(box) {
+  const val = parseFloat(box.percentage);
+  return !isNaN(val) && val >= 0 && val <= 100;
 }
 
 function measureBox(ctx, box, w, theme) {
@@ -55,23 +65,32 @@ function measureBox(ctx, box, w, theme) {
   }
 
   const innerW = Math.max(0, w - BOX_PADDING * 2);
+  const showCircle = hasPercentage(box);
+  
+  // If showing circle, reduce text width
+  const textWidth = showCircle ? innerW - CIRCLE_SIZE - CIRCLE_GAP : innerW;
 
   ctx.font = `bold ${theme.fontSizeHeadline}px ${theme['font-headline']}`;
   const headlineLines = hasText(box.headline)
-    ? wrapText(ctx, capitalizeHeadline(box.headline), innerW)
+    ? wrapText(ctx, capitalizeHeadline(box.headline), textWidth)
     : [];
-  const headlineLineHeight = theme.fontSizeHeadline * 1.15;
+  const headlineLineHeight = theme.fontSizeHeadline * 1.3;
 
   ctx.font = `${theme.fontSizeBody}px ${theme['font-body']}`;
-  const bodyLines = hasText(box.text) ? wrapText(ctx, box.text, innerW) : [];
-  const bodyLineHeight = theme.fontSizeBody * 1.35;
+  const bodyLines = hasText(box.text) ? wrapText(ctx, box.text, textWidth) : [];
+  const bodyLineHeight = theme.fontSizeBody * 1.4;
 
-  const contentHeight = measureContentHeight(
+  const textContentHeight = measureContentHeight(
     headlineLines,
     bodyLines,
     headlineLineHeight,
     bodyLineHeight,
   );
+  
+  // If showing circle, content height is the max of text height and circle height
+  const contentHeight = showCircle 
+    ? Math.max(textContentHeight, CIRCLE_SIZE)
+    : textContentHeight;
 
   return {
     innerW,
@@ -81,6 +100,8 @@ function measureBox(ctx, box, w, theme) {
     bodyLineHeight,
     contentHeight,
     height: BOX_PADDING * 2 + contentHeight,
+    showCircle,
+    percentage: showCircle ? parseFloat(box.percentage) : 0,
   };
 }
 
@@ -93,6 +114,8 @@ function emptyLayout() {
     bodyLineHeight: 0,
     contentHeight: 0,
     height: 0,
+    showCircle: false,
+    percentage: 0,
   };
 }
 
@@ -119,7 +142,7 @@ function measureContentHeight(
   return height;
 }
 
-function drawBox(ctx, x, y, w, layout, theme, { centerText = false } = {}) {
+function drawBox(ctx, x, y, w, layout, theme, { centerText = false, animationContext = null } = {}) {
   const {
     innerW,
     headlineLines,
@@ -127,6 +150,8 @@ function drawBox(ctx, x, y, w, layout, theme, { centerText = false } = {}) {
     headlineLineHeight,
     bodyLineHeight,
     height,
+    showCircle,
+    percentage,
   } = layout;
 
   if (height <= 0) return;
@@ -136,8 +161,18 @@ function drawBox(ctx, x, y, w, layout, theme, { centerText = false } = {}) {
   ctx.fill();
 
   const innerX = x + BOX_PADDING;
-  const textX = centerText ? innerX + innerW / 2 : innerX;
   let cursorY = y + BOX_PADDING;
+  
+  // Draw circular progress diagram if percentage is present
+  if (showCircle) {
+    const circleX = innerX + innerW - CIRCLE_SIZE / 2;
+    const circleY = cursorY + CIRCLE_SIZE / 2;
+    drawCircularProgress(ctx, circleX, circleY, CIRCLE_SIZE / 2, percentage, theme, animationContext);
+  }
+
+  // Text positioning
+  const textWidth = showCircle ? innerW - CIRCLE_SIZE - CIRCLE_GAP : innerW;
+  const textX = centerText ? innerX + textWidth / 2 : innerX;
 
   ctx.save();
   ctx.textBaseline = 'top';
@@ -165,6 +200,40 @@ function drawBox(ctx, x, y, w, layout, theme, { centerText = false } = {}) {
     }
   }
 
+  ctx.restore();
+}
+
+function drawCircularProgress(ctx, centerX, centerY, radius, percentage, theme, animationContext = null) {
+  const lineWidth = 12;
+  const startAngle = -Math.PI / 2; // Start at top
+  
+  // Calculate animated percentage: start at 0 and animate to target percentage
+  let currentPercentage = percentage;
+  if (animationContext) {
+    currentPercentage = percentage * animationContext.progress;
+  }
+  
+  const endAngle = startAngle + (2 * Math.PI * currentPercentage) / 100;
+  
+  ctx.save();
+  
+  // Draw background circle (track)
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius - lineWidth / 2, 0, 2 * Math.PI);
+  ctx.strokeStyle = theme['color-body'];
+  ctx.globalAlpha = 0.3;
+  ctx.lineWidth = lineWidth;
+  ctx.stroke();
+  
+  // Draw progress arc
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius - lineWidth / 2, startAngle, endAngle);
+  ctx.strokeStyle = theme['color-headline'];
+  ctx.globalAlpha = 1.0;
+  ctx.lineWidth = lineWidth;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+  
   ctx.restore();
 }
 

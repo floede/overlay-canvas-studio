@@ -22,7 +22,16 @@
             <h2>Scenes</h2>
             <button type="button" id="add-scene-btn" class="btn btn-primary">Add scene</button>
           </div>
+          <div class="collection-name-field">
+            <label for="collection-name-input">Collection name</label>
+            <input type="text" id="collection-name-input" placeholder="My overlay collection" />
+          </div>
           <ul id="scene-list" class="scene-list"></ul>
+          <div class="scene-actions">
+            <button type="button" id="export-scenes-btn" class="btn">Export JSON</button>
+            <button type="button" id="import-scenes-btn" class="btn">Import JSON</button>
+            <input type="file" id="import-scenes-file" accept=".json" hidden />
+          </div>
         </section>
 
         <section class="admin-section">

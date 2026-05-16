@@ -6,17 +6,17 @@
   --color-cream: #f4f1de;
 
   /* Semantic tokens used by templates */
-  --color-box-bg: var(--color-cream);
-  --color-box-border: var(--color-forest);
-  --color-headline: var(--color-forest);
-  --color-body: var(--color-forest-muted);
+  --color-box-bg: var(--color-forest);
+  --color-box-border: var(--color-cream);
+  --color-headline: var(--color-cream);
+  --color-body: var(--color-cream);
   --color-canvas-bg: transparent;
 
   /* Typography */
   --font-headline: "Segoe UI", system-ui, sans-serif;
   --font-body: Georgia, "Times New Roman", serif;
-  --font-size-headline: 22px;
-  --font-size-body: 15px;
+  --font-size-headline: 32px;
+  --font-size-body: 16px;
 
   /* App chrome */
   --color-ui-bg: #0d1f17;

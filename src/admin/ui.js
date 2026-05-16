@@ -9,6 +9,10 @@ import {
   setSceneTemplate,
   getNestedValue,
   setNestedValue,
+  downloadScenesAsJSON,
+  loadScenesFromFile,
+  saveState,
+  updateCollectionName,
 } from '../state/scenes.js';
 
 function debounce(fn, ms) {
@@ -23,8 +27,18 @@ export function createAdminUI(state, { onChange }) {
   const sceneListEl = document.getElementById('scene-list');
   const sceneFormEl = document.getElementById('scene-form');
   const addSceneBtn = document.getElementById('add-scene-btn');
+  const exportScenesBtn = document.getElementById('export-scenes-btn');
+  const importScenesBtn = document.getElementById('import-scenes-btn');
+  const importScenesFile = document.getElementById('import-scenes-file');
+  const collectionNameInput = document.getElementById('collection-name-input');
 
   const notify = debounce(() => onChange(state), 50);
+  
+  // Initialize collection name input
+  collectionNameInput.value = state.collectionName || '';
+  collectionNameInput.addEventListener('input', () => {
+    updateCollectionName(state, collectionNameInput.value);
+  });
 
   function renderSceneList() {
     sceneListEl.innerHTML = '';
@@ -167,6 +181,44 @@ export function createAdminUI(state, { onChange }) {
     }
     render();
     notify();
+  });
+
+  exportScenesBtn.addEventListener('click', () => {
+    downloadScenesAsJSON(state);
+  });
+
+  importScenesBtn.addEventListener('click', () => {
+    importScenesFile.click();
+  });
+
+  importScenesFile.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const imported = await loadScenesFromFile(file);
+      
+      const displayName = imported.collectionName || 'Untitled';
+      if (!confirm(`Import "${displayName}" (${imported.scenes.length} scene(s))? This will replace your current scenes.`)) {
+        importScenesFile.value = '';
+        return;
+      }
+      
+      state.scenes = imported.scenes;
+      state.activeId = imported.activeId;
+      state.collectionName = imported.collectionName;
+      saveState(state.scenes, state.activeId, state.collectionName);
+      
+      collectionNameInput.value = state.collectionName || '';
+      render();
+      notify();
+      
+      alert(`Successfully imported "${displayName}" (${imported.scenes.length} scene(s))!`);
+    } catch (err) {
+      alert(`Import failed: ${err.message}`);
+    } finally {
+      importScenesFile.value = '';
+    }
   });
 
   render();

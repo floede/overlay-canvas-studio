@@ -24,10 +24,11 @@ export function drawCenterBox(ctx, data, width, height, theme, animationContext 
 
 function measureBox(ctx, headline, w, theme) {
   const innerW = Math.max(0, w - BOX_PADDING * 2);
+  const fontSize = theme.fontSizeHeadline * 1.5;
 
-  ctx.font = `bold ${theme.fontSizeHeadline}px ${theme['font-headline']}`;
+  ctx.font = `bold ${fontSize}px ${theme['font-headline']}`;
   const headlineLines = wrapText(ctx, headline.toUpperCase(), innerW);
-  const lineMetrics = headlineLines.map((line) => getLineMetrics(ctx, line, theme.fontSizeHeadline));
+  const lineMetrics = headlineLines.map((line) => getLineMetrics(ctx, line, fontSize));
   const contentHeight = blockHeight(lineMetrics, LINE_GAP);
 
   return {
@@ -36,6 +37,7 @@ function measureBox(ctx, headline, w, theme) {
     lineMetrics,
     contentHeight,
     height: BOX_PADDING * 2 + contentHeight,
+    fontSize,
   };
 }
 
@@ -56,7 +58,7 @@ function blockHeight(lineMetrics, gap) {
 }
 
 function drawBox(ctx, x, y, w, layout, theme) {
-  const { innerW, headlineLines, lineMetrics, height } = layout;
+  const { innerW, headlineLines, lineMetrics, height, fontSize } = layout;
 
   roundRect(ctx, x, y, w, height, BOX_RADIUS);
   ctx.fillStyle = theme['color-box-bg'];
@@ -70,7 +72,7 @@ function drawBox(ctx, x, y, w, layout, theme) {
   ctx.textBaseline = 'alphabetic';
   ctx.textAlign = 'center';
   ctx.fillStyle = theme['color-headline'];
-  ctx.font = `bold ${theme.fontSizeHeadline}px ${theme['font-headline']}`;
+  ctx.font = `bold ${fontSize}px ${theme['font-headline']}`;
 
   for (let i = 0; i < headlineLines.length; i++) {
     const line = headlineLines[i];

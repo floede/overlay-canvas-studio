@@ -85,6 +85,33 @@ body {
   margin: 0;
 }
 
+.collection-name-field {
+  margin-bottom: 0.75rem;
+}
+
+.collection-name-field label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--color-ui-muted);
+}
+
+.collection-name-field input {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--color-ui-border);
+  border-radius: 6px;
+  background: var(--color-ui-bg);
+  color: var(--color-ui-text);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.collection-name-field input:focus {
+  outline: none;
+  border-color: var(--color-light-green);
+}
+
 .scene-list {
   list-style: none;
   margin: 0;
@@ -134,6 +161,12 @@ body {
 
 .scene-item-delete:hover {
   background: rgba(231, 111, 81, 0.15);
+}
+
+.scene-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
 }
 
 .scene-form {

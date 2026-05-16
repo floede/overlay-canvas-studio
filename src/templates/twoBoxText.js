@@ -1,7 +1,6 @@
 const MARGIN = 24;
-const BOX_GAP = 16;
 const BOX_PADDING = 16;
-const BOX_RADIUS = 12;
+const BOX_RADIUS = 8;
 const HEADLINE_GAP = 8;
 
 export function defaultTwoBoxData() {
@@ -18,76 +17,181 @@ export function defaultTwoBoxData() {
 }
 
 export function drawTwoBoxText(ctx, data, width, height, theme) {
-  const contentTop = MARGIN;
-  const contentHeight = height - MARGIN * 2;
   const boxWidth = width - MARGIN * 2;
-  const boxHeight = (contentHeight - BOX_GAP) / 2;
 
-  drawBox(ctx, data.box1, MARGIN, contentTop, boxWidth, boxHeight, theme);
-  drawBox(
-    ctx,
-    data.box2,
-    MARGIN,
-    contentTop + boxHeight + BOX_GAP,
-    boxWidth,
-    boxHeight,
-    theme,
-  );
+  const layout1 = measureBox(ctx, normalizeBox(data?.box1), boxWidth, theme);
+  if (layout1.height > 0) {
+    drawBox(ctx, MARGIN, MARGIN, boxWidth, layout1, theme, { centerText: true });
+  }
+
+  const layout2 = measureBox(ctx, normalizeBox(data?.box2), boxWidth, theme);
+  if (layout2.height > 0) {
+    const y2 = height - MARGIN - layout2.height;
+    drawBox(ctx, MARGIN, y2, boxWidth, layout2, theme);
+  }
 }
 
-function drawBox(ctx, box, x, y, w, h, theme) {
-  roundRect(ctx, x, y, w, h, BOX_RADIUS);
+function normalizeBox(box) {
+  if (!box || typeof box !== 'object') {
+    return { headline: '', text: '' };
+  }
+  return {
+    headline: box.headline ?? '',
+    text: box.text ?? '',
+  };
+}
+
+function hasText(value) {
+  return String(value ?? '').trim().length > 0;
+}
+
+function hasContent(box) {
+  return hasText(box.headline) || hasText(box.text);
+}
+
+function measureBox(ctx, box, w, theme) {
+  if (!hasContent(box)) {
+    return emptyLayout();
+  }
+
+  const innerW = Math.max(0, w - BOX_PADDING * 2);
+
+  ctx.font = `bold ${theme.fontSizeHeadline}px ${theme['font-headline']}`;
+  const headlineLines = hasText(box.headline)
+    ? wrapText(ctx, capitalizeHeadline(box.headline), innerW)
+    : [];
+  const headlineLineHeight = theme.fontSizeHeadline * 1.15;
+
+  ctx.font = `${theme.fontSizeBody}px ${theme['font-body']}`;
+  const bodyLines = hasText(box.text) ? wrapText(ctx, box.text, innerW) : [];
+  const bodyLineHeight = theme.fontSizeBody * 1.35;
+
+  const contentHeight = measureContentHeight(
+    headlineLines,
+    bodyLines,
+    headlineLineHeight,
+    bodyLineHeight,
+  );
+
+  return {
+    innerW,
+    headlineLines,
+    bodyLines,
+    headlineLineHeight,
+    bodyLineHeight,
+    contentHeight,
+    height: BOX_PADDING * 2 + contentHeight,
+  };
+}
+
+function emptyLayout() {
+  return {
+    innerW: 0,
+    headlineLines: [],
+    bodyLines: [],
+    headlineLineHeight: 0,
+    bodyLineHeight: 0,
+    contentHeight: 0,
+    height: 0,
+  };
+}
+
+function measureContentHeight(
+  headlineLines,
+  bodyLines,
+  headlineLineHeight,
+  bodyLineHeight,
+) {
+  let height = 0;
+
+  if (headlineLines.length > 0) {
+    height += headlineLines.length * headlineLineHeight;
+  }
+
+  if (headlineLines.length > 0 && bodyLines.length > 0) {
+    height += HEADLINE_GAP;
+  }
+
+  if (bodyLines.length > 0) {
+    height += bodyLines.length * bodyLineHeight;
+  }
+
+  return height;
+}
+
+function drawBox(ctx, x, y, w, layout, theme, { centerText = false } = {}) {
+  const {
+    innerW,
+    headlineLines,
+    bodyLines,
+    headlineLineHeight,
+    bodyLineHeight,
+    height,
+  } = layout;
+
+  if (height <= 0) return;
+
+  roundRect(ctx, x, y, w, height, BOX_RADIUS);
   ctx.fillStyle = theme['color-box-bg'];
   ctx.fill();
-  ctx.strokeStyle = theme['color-box-border'];
-  ctx.lineWidth = 2;
-  ctx.stroke();
 
   const innerX = x + BOX_PADDING;
-  const innerY = y + BOX_PADDING;
-  const innerW = w - BOX_PADDING * 2;
+  const textX = centerText ? innerX + innerW / 2 : innerX;
+  let cursorY = y + BOX_PADDING;
 
-  ctx.fillStyle = theme['color-headline'];
-  ctx.font = `bold ${theme.fontSizeHeadline}px ${theme['font-headline']}`;
-  const headlineLines = wrapText(ctx, box.headline ?? '', innerW);
-  let cursorY = innerY + theme.fontSizeHeadline;
+  ctx.save();
+  ctx.textBaseline = 'top';
+  ctx.textAlign = centerText ? 'center' : 'left';
 
-  for (const line of headlineLines) {
-    ctx.fillText(line, innerX, cursorY);
-    cursorY += theme.fontSizeHeadline * 1.15;
+  if (headlineLines.length > 0) {
+    ctx.fillStyle = theme['color-headline'];
+    ctx.font = `bold ${theme.fontSizeHeadline}px ${theme['font-headline']}`;
+    for (const line of headlineLines) {
+      ctx.fillText(line, textX, cursorY);
+      cursorY += headlineLineHeight;
+    }
   }
 
-  cursorY += HEADLINE_GAP;
-
-  ctx.fillStyle = theme['color-body'];
-  ctx.font = `${theme.fontSizeBody}px ${theme['font-body']}`;
-  const bodyLines = wrapText(ctx, box.text ?? '', innerW);
-  const lineHeight = theme.fontSizeBody * 1.35;
-
-  for (const line of bodyLines) {
-    if (cursorY > y + h - BOX_PADDING) break;
-    ctx.fillText(line, innerX, cursorY);
-    cursorY += lineHeight;
+  if (headlineLines.length > 0 && bodyLines.length > 0) {
+    cursorY += HEADLINE_GAP;
   }
+
+  if (bodyLines.length > 0) {
+    ctx.fillStyle = theme['color-body'];
+    ctx.font = `${theme.fontSizeBody}px ${theme['font-body']}`;
+    for (const line of bodyLines) {
+      ctx.fillText(line, textX, cursorY);
+      cursorY += bodyLineHeight;
+    }
+  }
+
+  ctx.restore();
+}
+
+function capitalizeHeadline(text) {
+  return String(text).toUpperCase();
 }
 
 function roundRect(ctx, x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
   ctx.closePath();
 }
 
 function wrapText(ctx, text, maxWidth) {
+  if (maxWidth <= 0) return [];
+
   const words = String(text).split(/\s+/).filter(Boolean);
-  if (words.length === 0) return [''];
+  if (words.length === 0) return [];
 
   const lines = [];
   let line = words[0];

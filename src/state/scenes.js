@@ -118,6 +118,17 @@ export function updateSceneLabel(state, id, label) {
   return state;
 }
 
+export function setSceneTemplate(state, id, templateId) {
+  const scene = state.scenes.find((s) => s.id === id);
+  const template = getTemplate(templateId);
+  if (!scene || !template || scene.templateId === templateId) return state;
+
+  scene.templateId = templateId;
+  scene.data = createSceneData(templateId);
+  saveState(state.scenes, state.activeId);
+  return state;
+}
+
 export function getNestedValue(obj, path) {
   return path.split('.').reduce((acc, key) => acc?.[key], obj);
 }

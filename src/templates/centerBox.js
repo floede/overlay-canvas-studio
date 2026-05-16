@@ -1,6 +1,7 @@
 const MARGIN = 24;
 const BOX_PADDING = 16;
 const BOX_RADIUS = 8;
+const LINE_GAP = 4;
 
 export function defaultCenterBoxData() {
   return {
@@ -26,20 +27,34 @@ function measureBox(ctx, headline, w, theme) {
 
   ctx.font = `bold ${theme.fontSizeHeadline}px ${theme['font-headline']}`;
   const headlineLines = wrapText(ctx, headline.toUpperCase(), innerW);
-  const headlineLineHeight = theme.fontSizeHeadline * 1.15;
-
-  const contentHeight = headlineLines.length * headlineLineHeight;
+  const lineMetrics = headlineLines.map((line) => getLineMetrics(ctx, line, theme.fontSizeHeadline));
+  const contentHeight = blockHeight(lineMetrics, LINE_GAP);
 
   return {
     innerW,
     headlineLines,
-    headlineLineHeight,
+    lineMetrics,
+    contentHeight,
     height: BOX_PADDING * 2 + contentHeight,
   };
 }
 
+function getLineMetrics(ctx, line, fontSize) {
+  const m = ctx.measureText(line);
+  const ascent = m.actualBoundingBoxAscent ?? fontSize * 0.78;
+  const descent = m.actualBoundingBoxDescent ?? fontSize * 0.22;
+  return { ascent, descent, height: ascent + descent };
+}
+
+function blockHeight(lineMetrics, gap) {
+  if (lineMetrics.length === 0) return 0;
+  let height = lineMetrics.reduce((sum, line) => sum + line.height, 0);
+  height += gap * (lineMetrics.length - 1);
+  return height;
+}
+
 function drawBox(ctx, x, y, w, layout, theme) {
-  const { innerW, headlineLines, headlineLineHeight, height } = layout;
+  const { innerW, headlineLines, lineMetrics, height } = layout;
 
   roundRect(ctx, x, y, w, height, BOX_RADIUS);
   ctx.fillStyle = theme['color-box-bg'];
@@ -50,14 +65,16 @@ function drawBox(ctx, x, y, w, layout, theme) {
   let cursorY = y + BOX_PADDING;
 
   ctx.save();
-  ctx.textBaseline = 'top';
+  ctx.textBaseline = 'alphabetic';
   ctx.textAlign = 'center';
   ctx.fillStyle = theme['color-headline'];
   ctx.font = `bold ${theme.fontSizeHeadline}px ${theme['font-headline']}`;
 
-  for (const line of headlineLines) {
-    ctx.fillText(line, textX, cursorY);
-    cursorY += headlineLineHeight;
+  for (let i = 0; i < headlineLines.length; i++) {
+    const line = headlineLines[i];
+    const { ascent, descent, height: lineHeight } = lineMetrics[i];
+    ctx.fillText(line, textX, cursorY + ascent);
+    cursorY += lineHeight + (i < headlineLines.length - 1 ? LINE_GAP : 0);
   }
 
   ctx.restore();

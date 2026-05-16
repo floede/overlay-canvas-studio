@@ -6,6 +6,7 @@ import {
   deleteScene,
   updateSceneData,
   updateSceneLabel,
+  setSceneTemplate,
   getNestedValue,
   setNestedValue,
 } from '../state/scenes.js';
@@ -81,6 +82,39 @@ export function createAdminUI(state, { onChange }) {
     });
     labelField.appendChild(labelInput);
     sceneFormEl.appendChild(labelField);
+
+    const templateField = document.createElement('div');
+    templateField.className = 'form-field';
+    const templateLabel = document.createElement('label');
+    templateLabel.textContent = 'Template';
+    templateField.appendChild(templateLabel);
+
+    const templateSelect = document.createElement('select');
+    for (const t of listTemplates()) {
+      const option = document.createElement('option');
+      option.value = t.id;
+      option.textContent = t.label;
+      option.selected = t.id === scene.templateId;
+      templateSelect.appendChild(option);
+    }
+    templateSelect.addEventListener('change', () => {
+      const nextId = templateSelect.value;
+      if (nextId === scene.templateId) return;
+      const nextTemplate = getTemplate(nextId);
+      if (
+        !confirm(
+          `Switch to "${nextTemplate?.label ?? nextId}"? Scene content will reset to that template's defaults.`,
+        )
+      ) {
+        templateSelect.value = scene.templateId;
+        return;
+      }
+      setSceneTemplate(state, scene.id, nextId);
+      render();
+      notify();
+    });
+    templateField.appendChild(templateSelect);
+    sceneFormEl.appendChild(templateField);
 
     for (const field of template.fields) {
       const wrap = document.createElement('div');

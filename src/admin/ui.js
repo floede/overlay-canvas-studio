@@ -127,10 +127,8 @@ export function createAdminUI(state, { onChange }) {
     if (available.length === 1) {
       addScene(state, available[0].id);
     } else {
-      const choice = prompt(
-        'Template id:',
-        available[0]?.id ?? 'twoBoxText',
-      );
+      const ids = available.map((t) => t.id).join(', ');
+      const choice = prompt(`Template id (${ids}):`, available[0]?.id ?? 'twoBoxText');
       if (choice && getTemplate(choice)) addScene(state, choice);
     }
     render();

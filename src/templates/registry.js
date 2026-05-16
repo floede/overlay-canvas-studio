@@ -1,9 +1,17 @@
+import { drawCenterBox, defaultCenterBoxData } from './centerBox.js';
 import { drawTwoBoxText, defaultTwoBoxData } from './twoBoxText.js';
 
 export const CANVAS_WIDTH = 390;
 export const CANVAS_HEIGHT = 844;
 
 export const templates = {
+  centerBox: {
+    id: 'centerBox',
+    label: 'Center box',
+    fields: [{ key: 'headline', label: 'Headline', type: 'text' }],
+    defaults: defaultCenterBoxData(),
+    draw: drawCenterBox,
+  },
   twoBoxText: {
     id: 'twoBoxText',
     label: 'Two boxes with text',
